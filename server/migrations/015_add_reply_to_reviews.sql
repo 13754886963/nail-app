@@ -1,0 +1,3 @@
+ALTER TABLE reviews
+  ADD COLUMN IF NOT EXISTS artist_reply      TEXT,
+  ADD COLUMN IF NOT EXISTS artist_replied_at TIMESTAMPTZ;

@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# dependencies
+node_modules/
+
+# Claude Code
+.claude/
+
+# env files
+.env
+.env.local
+.env.production
