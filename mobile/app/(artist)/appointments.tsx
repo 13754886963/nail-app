@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, SectionList, TouchableOpacity,
   ActivityIndicator, Alert, TextInput, Modal, Platform,
+  KeyboardAvoidingView, Keyboard,
 } from 'react-native';
+
+const REJECT_PRESETS = ['当天时间已约满', '不在服务范围内', '款式超出能力范围', '地理位置不便'];
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -146,40 +149,62 @@ export default function ArtistAppointmentsScreen() {
       )}
 
       {/* Reject reason modal */}
-      <Modal visible={!!rejectTarget} animationType="slide" transparent>
-        <View style={modal.overlay}>
-          <View style={modal.sheet}>
-            <View style={modal.handle} />
-            <Text style={modal.title}>拒绝原因（选填）</Text>
-            <TextInput
-              style={modal.input}
-              value={rejectReason}
-              onChangeText={setRejectReason}
-              placeholder="告诉顾客拒绝的原因..."
-              placeholderTextColor={Colors.textSecondary}
-              multiline
-              maxLength={200}
-            />
-            <View style={modal.btnRow}>
-              <TouchableOpacity style={modal.cancelBtn} onPress={() => setRejectTarget(null)}>
-                <Text style={modal.cancelText}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[modal.rejectBtn, actionLoading && { opacity: 0.6 }]}
-                disabled={actionLoading}
-                onPress={async () => {
-                  if (!rejectTarget) return;
-                  await doAction(rejectTarget, 'reject', rejectReason.trim() || undefined);
-                  setRejectTarget(null);
-                }}
-              >
-                {actionLoading
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={modal.rejectText}>确认拒绝</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+      <Modal visible={!!rejectTarget} animationType="slide" transparent onRequestClose={() => setRejectTarget(null)}>
+        <TouchableOpacity style={modal.backdrop} activeOpacity={1} onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={modal.kav}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={modal.sheet}>
+                <View style={modal.handle} />
+                <Text style={modal.title}>选择拒绝原因</Text>
+
+                <View style={modal.presets}>
+                  {REJECT_PRESETS.map((p) => (
+                    <TouchableOpacity
+                      key={p}
+                      style={[modal.preset, rejectReason === p && modal.presetActive]}
+                      onPress={() => { Keyboard.dismiss(); setRejectReason(rejectReason === p ? '' : p); }}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[modal.presetText, rejectReason === p && modal.presetTextActive]}>{p}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TextInput
+                  style={modal.input}
+                  value={rejectReason}
+                  onChangeText={setRejectReason}
+                  placeholder="或自定义原因（选填）…"
+                  placeholderTextColor={Colors.textSecondary}
+                  multiline
+                  maxLength={200}
+                  returnKeyType="done"
+                  blurOnSubmit
+                />
+
+                <View style={modal.btnRow}>
+                  <TouchableOpacity style={modal.cancelBtn} onPress={() => { Keyboard.dismiss(); setRejectTarget(null); }}>
+                    <Text style={modal.cancelText}>取消</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[modal.rejectBtn, actionLoading && { opacity: 0.6 }]}
+                    disabled={actionLoading}
+                    onPress={async () => {
+                      Keyboard.dismiss();
+                      if (!rejectTarget) return;
+                      await doAction(rejectTarget, 'reject', rejectReason.trim() || undefined);
+                      setRejectTarget(null);
+                    }}
+                  >
+                    {actionLoading
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={modal.rejectText}>确认拒绝</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
     </View>
   );
@@ -280,11 +305,11 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', gap: 12,
     backgroundColor: '#fff', borderRadius: 16, marginBottom: 10,
-    overflow: 'hidden',
+    overflow: 'hidden', minHeight: 110,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
   },
-  thumb: { width: 90, height: 120 },
+  thumb: { width: 90, alignSelf: 'stretch' },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   initialCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   initialText: { fontSize: 22, fontWeight: '700', color: '#fff' },
@@ -319,7 +344,8 @@ const styles = StyleSheet.create({
 });
 
 const modal = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  kav: { justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingHorizontal: 20, paddingBottom: 40, paddingTop: 12,
@@ -329,10 +355,20 @@ const modal = StyleSheet.create({
     backgroundColor: '#DDD', alignSelf: 'center', marginBottom: 20,
   },
   title: { fontSize: 17, fontWeight: '700', color: '#1C1C1E', marginBottom: 14 },
+
+  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  preset: {
+    paddingHorizontal: 13, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: '#F2F2F7', borderWidth: 1, borderColor: '#E5E7EB',
+  },
+  presetActive: { backgroundColor: '#FFF0F5', borderColor: Colors.primary },
+  presetText: { fontSize: 13, color: Colors.textSecondary },
+  presetTextActive: { color: Colors.primary, fontWeight: '600' },
+
   input: {
     borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: '#1C1C1E', minHeight: 80, textAlignVertical: 'top',
+    fontSize: 14, color: '#1C1C1E', minHeight: 64, textAlignVertical: 'top',
     marginBottom: 20,
   },
   btnRow: { flexDirection: 'row', gap: 12 },

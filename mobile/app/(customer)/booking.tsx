@@ -265,11 +265,11 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', gap: 12,
     backgroundColor: '#fff', borderRadius: 16,
-    overflow: 'hidden',
+    overflow: 'hidden', minHeight: 110,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
   },
-  thumb: { width: 90, height: 120 },
+  thumb: { width: 90, alignSelf: 'stretch' },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   initialCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   initialText: { fontSize: 22, fontWeight: '700', color: '#fff' },
