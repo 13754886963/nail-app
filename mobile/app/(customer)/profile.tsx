@@ -116,12 +116,6 @@ export default function CustomerProfileScreen() {
           ) : null}
         </View>
 
-        <View style={styles.statsRow}>
-          <StatItem label="预约" value={stats.appointments ?? 0} />
-          <View style={styles.statSep} />
-          <StatItem label="关注" value={stats.following ?? 0} />
-        </View>
-
         <View style={styles.tabBar}>
           <TabBtn label="收藏款式" active={activeTab === 'favorites'} onPress={() => setActiveTab('favorites')} />
           <TabBtn label="预约记录" active={activeTab === 'appointments'} onPress={() => setActiveTab('appointments')} />
@@ -305,14 +299,6 @@ function GridContent({ children }: { children: React.ReactNode }) {
   return <View style={styles.grid}>{children}</View>;
 }
 
-function StatItem({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
 
 function TabBtn({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
@@ -346,15 +332,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EBEBEB', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20,
   },
   ipText: { fontSize: 11, color: Colors.textSecondary },
-  statsRow: {
-    flexDirection: 'row', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 14,
-    borderRadius: 16, paddingVertical: 18,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
-  },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 20, fontWeight: '700', color: Colors.text },
-  statLabel: { fontSize: 11, color: Colors.textSecondary, marginTop: 3 },
-  statSep: { width: 1, backgroundColor: Colors.border, marginVertical: 4 },
   tabBar: {
     flexDirection: 'row', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 12,
     borderRadius: 16, overflow: 'hidden',
