@@ -1,11 +1,30 @@
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import * as FileSystem from 'expo-file-system';
 import { useAuthStore } from '../../stores/authStore';
 import { Avatar } from '../../components/Avatar';
 import { apiDevSwitchUser } from '../../services/userService';
 import { Colors } from '../../constants/colors';
+
+async function getDirSize(dir: string): Promise<number> {
+  const info = await FileSystem.getInfoAsync(dir);
+  if (!info.exists) return 0;
+  if (!info.isDirectory) return (info as FileSystem.FileInfo & { size?: number }).size ?? 0;
+  const items = await FileSystem.readDirectoryAsync(dir);
+  const sizes = await Promise.all(
+    items.map((item) => getDirSize(`${dir.replace(/\/$/, '')}/${item}`))
+  );
+  return sizes.reduce((a, b) => a + b, 0);
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // TODO: 测试账号，上线前删除
 const DEV_ACCOUNTS = [
@@ -61,13 +80,30 @@ export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const setAuth = useAuthStore((s) => s.setAuth);
+
+  const [cacheSize, setCacheSize] = useState<string>('计算中…');
+
+  const refreshCacheSize = async () => {
+    const bytes = await getDirSize(FileSystem.cacheDirectory ?? '');
+    setCacheSize(formatSize(bytes));
+  };
+
+  useEffect(() => { refreshCacheSize(); }, []);
   const handleClearCache = () => {
-    Alert.alert('清除缓存', '确定要清除本地图片缓存吗？', [
+    Alert.alert('清除缓存', `当前缓存：${cacheSize}\n确定要清除所有本地缓存吗？`, [
       { text: '取消', style: 'cancel' },
       {
         text: '清除',
+        style: 'destructive',
         onPress: async () => {
-          await Promise.all([Image.clearDiskCache(), Image.clearMemoryCache()]);
+          await Promise.all([
+            Image.clearDiskCache(),
+            Image.clearMemoryCache(),
+            FileSystem.cacheDirectory
+              ? FileSystem.deleteAsync(FileSystem.cacheDirectory, { idempotent: true })
+              : Promise.resolve(),
+          ]);
+          setCacheSize('0 B');
           Alert.alert('完成', '缓存已清除');
         },
       },
@@ -165,7 +201,7 @@ export default function SettingsScreen() {
         <Divider />
         <Row
           icon="trash-outline" iconBg="#FFF3E0" iconColor="#F59E0B"
-          label="清除缓存"
+          label="清除缓存" value={cacheSize}
           onPress={handleClearCache}
         />
       </View>
