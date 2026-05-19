@@ -21,7 +21,10 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 
 const uploadsDir = path.resolve(process.cwd(), process.env['UPLOADS_DIR'] ?? './uploads');
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '7d',
+  immutable: true,
+}));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

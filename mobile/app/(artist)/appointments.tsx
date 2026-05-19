@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, SectionList, TouchableOpacity,
-  ActivityIndicator, Alert, Image, TextInput, Modal, Platform,
+  ActivityIndicator, Alert, TextInput, Modal, Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';

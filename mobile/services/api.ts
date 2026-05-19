@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useToastStore } from '../stores/toastStore';
 
-const BASE_URL = process.env['EXPO_PUBLIC_API_URL'] ?? 'http://localhost:3000/api';
+const BASE_URL = process.env['EXPO_PUBLIC_API_URL'] ?? 'http://54.248.67.35:3000/api';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
