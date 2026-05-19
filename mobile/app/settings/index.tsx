@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useAuthStore } from '../../stores/authStore';
 import { Avatar } from '../../components/Avatar';
 import { apiDevSwitchUser } from '../../services/userService';
@@ -60,6 +61,19 @@ export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const handleClearCache = () => {
+    Alert.alert('清除缓存', '确定要清除本地图片缓存吗？', [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '清除',
+        onPress: async () => {
+          await Promise.all([Image.clearDiskCache(), Image.clearMemoryCache()]);
+          Alert.alert('完成', '缓存已清除');
+        },
+      },
+    ]);
+  };
+
   const handleLogout = () => {
     Alert.alert('退出登录', '确定要退出当前账号吗？', [
       { text: '取消', style: 'cancel' },
@@ -147,6 +161,12 @@ export default function SettingsScreen() {
           icon="shield-checkmark-outline" iconBg="#F5F3FF" iconColor="#8B5CF6"
           label="隐私政策"
           onPress={() => router.push('/settings/privacy')}
+        />
+        <Divider />
+        <Row
+          icon="trash-outline" iconBg="#FFF3E0" iconColor="#F59E0B"
+          label="清除缓存"
+          onPress={handleClearCache}
         />
       </View>
 
