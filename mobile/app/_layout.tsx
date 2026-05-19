@@ -61,11 +61,11 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(customer)" />
         <Stack.Screen name="(artist)" />
-        <Stack.Screen name="style/[id]" options={{ headerShown: true, title: '款式详情', headerTintColor: Colors.primary, headerBackTitle: '' }} />
+        <Stack.Screen name="style/[id]" options={{ headerShown: true, title: '款式详情', headerTintColor: Colors.primary, headerTitleStyle: { color: '#1C1C1E' }, headerBackTitle: '' }} />
         <Stack.Screen name="artist/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="appointment/[id]" options={{ headerShown: true, title: '预约详情', headerTintColor: Colors.primary, headerBackTitle: '' }} />
+        <Stack.Screen name="appointment/[id]" options={{ headerShown: true, title: '预约详情', headerTintColor: Colors.primary, headerTitleStyle: { color: '#1C1C1E' }, headerBackTitle: '' }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="works/upload" options={{ headerShown: true, title: '上传作品', headerTintColor: Colors.primary, headerBackTitle: '' }} />
+        <Stack.Screen name="works/upload" options={{ headerShown: true, title: '上传作品', headerTintColor: Colors.primary, headerTitleStyle: { color: '#1C1C1E' }, headerBackTitle: '' }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
       </Stack>
     </>

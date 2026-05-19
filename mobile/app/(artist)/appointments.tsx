@@ -198,13 +198,20 @@ function ArtistApptCard({
   const dateStr = dt.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' });
   const timeStr = dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
+  const initial = item.customer_name.charAt(0).toUpperCase();
+  const avatarColors = ['#FF6B9D','#A78BFA','#34D399','#60A5FA','#F59E0B','#F87171'];
+  const avatarBg = avatarColors[item.customer_name.charCodeAt(0) % avatarColors.length];
+
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={onPress}>
       {item.style_image_url ? (
         <Image source={{ uri: item.style_image_url }} style={styles.thumb} contentFit="cover" />
       ) : (
-        <View style={[styles.thumb, styles.thumbPlaceholder]}>
-          <Ionicons name="image-outline" size={24} color={Colors.border} />
+        <View style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: avatarBg + '22' }]}>
+          <View style={[styles.initialCircle, { backgroundColor: avatarBg }]}>
+            <Text style={styles.initialText}>{initial}</Text>
+          </View>
+          <Text style={[styles.noStyleText, { color: avatarBg }]}>自选时间</Text>
         </View>
       )}
 
@@ -278,7 +285,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
   },
   thumb: { width: 90, height: 120 },
-  thumbPlaceholder: { backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' },
+  thumbPlaceholder: { alignItems: 'center', justifyContent: 'center', gap: 8 },
+  initialCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  initialText: { fontSize: 22, fontWeight: '700', color: '#fff' },
+  noStyleText: { fontSize: 11, fontWeight: '600' },
   info: { flex: 1, paddingVertical: 12, paddingRight: 12, gap: 5 },
   infoTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   customerName: { fontSize: 15, fontWeight: '700', color: '#1C1C1E' },
