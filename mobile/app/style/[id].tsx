@@ -267,28 +267,52 @@ export default function StyleDetailScreen() {
             )}
           </View>
 
-          {/* Action bar */}
-          <View style={styles.actionBar}>
-            <ActionBtn
-              icon={detail.is_liked ? 'heart' : 'heart-outline'}
-              color={detail.is_liked ? '#F43F5E' : Colors.textSecondary}
-              count={detail.like_count}
-              label="点赞"
+          {/* Action bar — like & favorite pills */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionPill}
               onPress={handleLike}
-            />
-            <ActionBtn
-              icon={detail.is_favorited ? 'bookmark' : 'bookmark-outline'}
-              color={detail.is_favorited ? Colors.primary : Colors.textSecondary}
-              count={detail.favorite_count}
-              label="收藏"
+              activeOpacity={0.75}
+            >
+              <Ionicons
+                name={detail.is_liked ? 'heart' : 'heart-outline'}
+                size={18}
+                color={detail.is_liked ? '#F43F5E' : Colors.textSecondary}
+              />
+              <Text style={[styles.actionPillText, detail.is_liked && { color: '#F43F5E' }]}>
+                {detail.like_count}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionPill}
               onPress={handleFavorite}
-            />
-            <ActionBtn
-              icon="chatbubble-outline"
-              color={Colors.textSecondary}
-              count={detail.comment_count}
-              label="评论"
-            />
+              activeOpacity={0.75}
+            >
+              <Ionicons
+                name={detail.is_favorited ? 'bookmark' : 'bookmark-outline'}
+                size={18}
+                color={detail.is_favorited ? Colors.primary : Colors.textSecondary}
+              />
+              <Text style={[styles.actionPillText, detail.is_favorited && { color: Colors.primary }]}>
+                {detail.favorite_count}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Comments — moved above book button */}
+          <View style={styles.commentsSection}>
+            <Text style={styles.commentsTitle}>评论 ({detail.comment_count})</Text>
+            {comments.length === 0 ? (
+              <Text style={styles.noComments}>还没有评论，来抢沙发吧</Text>
+            ) : (
+              comments.map((c) => (
+                <CommentItem
+                  key={c.id}
+                  comment={c}
+                  onReply={() => setReplyTarget({ id: c.id, userName: c.user_name })}
+                />
+              ))
+            )}
           </View>
 
           {/* Book button — only for customers */}
@@ -304,22 +328,6 @@ export default function StyleDetailScreen() {
               </TouchableOpacity>
             </View>
           )}
-
-          {/* Comments */}
-          <View style={styles.commentsSection}>
-            <Text style={styles.commentsTitle}>评论 ({detail.comment_count})</Text>
-            {comments.length === 0 ? (
-              <Text style={styles.noComments}>还没有评论，来抢沙发吧</Text>
-            ) : (
-              comments.map((c) => (
-                <CommentItem
-                  key={c.id}
-                  comment={c}
-                  onReply={() => setReplyTarget({ id: c.id, userName: c.user_name })}
-                />
-              ))
-            )}
-          </View>
 
           <View style={{ height: 80 }} />
         </ScrollView>
@@ -542,20 +550,6 @@ export default function StyleDetailScreen() {
   );
 }
 
-function ActionBtn({
-  icon, color, count, label, onPress,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  color: string; count: number; label: string; onPress?: () => void;
-}) {
-  return (
-    <TouchableOpacity style={styles.actionBtn} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
-      <Ionicons name={icon} size={24} color={color} />
-      <Text style={styles.actionCount}>{count}</Text>
-      <Text style={styles.actionLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
 
 function CommentItem({ comment, onReply }: { comment: Comment; onReply: () => void }) {
   const date = new Date(comment.created_at).toLocaleDateString('zh-CN', {
@@ -606,13 +600,17 @@ const styles = StyleSheet.create({
   },
   tagText: { fontSize: 12, color: Colors.textSecondary },
 
-  actionBar: {
-    flexDirection: 'row', paddingVertical: 12,
+  actionRow: {
+    flexDirection: 'row', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  actionBtn: { flex: 1, alignItems: 'center', gap: 3 },
-  actionCount: { fontSize: 15, fontWeight: '600', color: Colors.text },
-  actionLabel: { fontSize: 11, color: Colors.textSecondary },
+  actionPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 20, backgroundColor: '#F2F2F7',
+  },
+  actionPillText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
 
   bookSection: { padding: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
   bookBtn: {
