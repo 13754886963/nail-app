@@ -172,6 +172,19 @@ export default function SettingsScreen() {
         />
       </View>
 
+      {user.role === 'artist' && (
+        <>
+          <SectionTitle title="美甲师" />
+          <View style={styles.card}>
+            <Row
+              icon="calendar-outline" iconBg="#FFF0F5" iconColor={Colors.primary}
+              label="可预约时间"
+              onPress={() => router.push('/settings/availability')}
+            />
+          </View>
+        </>
+      )}
+
       <SectionTitle title="偏好" />
       <View style={styles.card}>
         <Row

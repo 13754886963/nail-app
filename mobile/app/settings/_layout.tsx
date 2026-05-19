@@ -17,6 +17,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="help"            options={{ title: '帮助与反馈' }} />
       <Stack.Screen name="privacy"         options={{ title: '隐私政策' }} />
       <Stack.Screen name="about"           options={{ title: '关于 NailApp' }} />
+      <Stack.Screen name="availability"    options={{ title: '可预约时间' }} />
     </Stack>
   );
 }

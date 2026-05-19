@@ -13,6 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { apiGetArtistProfile, apiGetArtistStyles, apiToggleFollow, ArtistProfile, ArtistStyle } from '../../services/artistService';
 import { apiBookAppointment } from '../../services/appointmentService';
 import { apiGetArtistReviews, Review } from '../../services/reviewService';
+import { apiGetArtistAvailability, DayAvailability } from '../../services/artistAvailabilityService';
 import { useAuthStore } from '../../stores/authStore';
 import { Avatar } from '../../components/Avatar';
 import { StarDisplay } from '../appointment/[id]';
@@ -53,6 +54,7 @@ export default function ArtistPublicProfile() {
   const [bookingNote, setBookingNote] = useState('');
   const [bookingImages, setBookingImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [availability, setAvailability] = useState<DayAvailability[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -60,6 +62,7 @@ export default function ArtistPublicProfile() {
       apiGetArtistProfile(id).then(setProfile),
       apiGetArtistStyles(id).then(setStyles),
       apiGetArtistReviews(id).then(setReviews),
+      apiGetArtistAvailability(id).then(setAvailability).catch(() => {}),
     ]).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
 
@@ -101,6 +104,22 @@ export default function ArtistPublicProfile() {
     if (bookingImages.length < 2) {
       Alert.alert('提示', '请至少上传 2 张参考图片');
       return;
+    }
+    if (availability.length > 0) {
+      const dayOfWeek = bookingDate.getDay();
+      const daySchedule = availability.find((a) => a.day_of_week === dayOfWeek);
+      if (daySchedule && !daySchedule.is_available) {
+        const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        Alert.alert('提示', `美甲师 ${DAY_NAMES[dayOfWeek]} 不接受预约`);
+        return;
+      }
+      if (daySchedule?.is_available) {
+        const hhmm = `${String(bookingDate.getHours()).padStart(2, '0')}:${String(bookingDate.getMinutes()).padStart(2, '0')}`;
+        if (hhmm < daySchedule.start_time || hhmm >= daySchedule.end_time) {
+          Alert.alert('提示', `美甲师当天可预约时间为 ${daySchedule.start_time} - ${daySchedule.end_time}`);
+          return;
+        }
+      }
     }
     setSubmitting(true);
     try {
@@ -368,46 +387,109 @@ export default function ArtistPublicProfile() {
               <Text style={modal.title}>预约 · {profile.name}</Text>
 
               <Text style={modal.label}>预约日期</Text>
-              <TouchableOpacity style={modal.picker} onPress={() => setShowDatePicker(true)}>
-                <Ionicons name="calendar-outline" size={18} color={Colors.primary} />
-                <Text style={modal.pickerText}>{formatDate(bookingDate)}</Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={bookingDate}
-                  mode="date"
-                  minimumDate={new Date()}
-                  onChange={(_, date) => {
-                    setShowDatePicker(false);
-                    if (date) setBookingDate((prev) => {
-                      const next = new Date(date);
-                      next.setHours(prev.getHours(), prev.getMinutes(), 0, 0);
-                      return next;
-                    });
-                  }}
-                />
+              {Platform.OS === 'ios' ? (
+                <View style={modal.picker}>
+                  <Ionicons name="calendar-outline" size={18} color={Colors.primary} />
+                  <DateTimePicker
+                    value={bookingDate}
+                    mode="date"
+                    display="compact"
+                    minimumDate={new Date()}
+                    onChange={(_, date) => {
+                      if (date) setBookingDate((prev) => {
+                        const next = new Date(date);
+                        next.setHours(prev.getHours(), prev.getMinutes(), 0, 0);
+                        return next;
+                      });
+                    }}
+                  />
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity style={modal.picker} onPress={() => setShowDatePicker(true)}>
+                    <Ionicons name="calendar-outline" size={18} color={Colors.primary} />
+                    <Text style={modal.pickerText}>{formatDate(bookingDate)}</Text>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={bookingDate}
+                      mode="date"
+                      minimumDate={new Date()}
+                      onChange={(_, date) => {
+                        setShowDatePicker(false);
+                        if (date) setBookingDate((prev) => {
+                          const next = new Date(date);
+                          next.setHours(prev.getHours(), prev.getMinutes(), 0, 0);
+                          return next;
+                        });
+                      }}
+                    />
+                  )}
+                </>
               )}
 
               <Text style={modal.label}>预约时间</Text>
-              <TouchableOpacity style={modal.picker} onPress={() => setShowTimePicker(true)}>
-                <Ionicons name="time-outline" size={18} color={Colors.primary} />
-                <Text style={modal.pickerText}>{formatTime(bookingDate)}</Text>
-              </TouchableOpacity>
-              {showTimePicker && (
-                <DateTimePicker
-                  value={bookingDate}
-                  mode="time"
-                  is24Hour
-                  onChange={(_, date) => {
-                    setShowTimePicker(false);
-                    if (date) setBookingDate((prev) => {
-                      const next = new Date(prev);
-                      next.setHours(date.getHours(), date.getMinutes(), 0, 0);
-                      return next;
-                    });
-                  }}
-                />
+              {Platform.OS === 'ios' ? (
+                <View style={modal.picker}>
+                  <Ionicons name="time-outline" size={18} color={Colors.primary} />
+                  <DateTimePicker
+                    value={bookingDate}
+                    mode="time"
+                    display="compact"
+                    onChange={(_, date) => {
+                      if (date) setBookingDate((prev) => {
+                        const next = new Date(prev);
+                        next.setHours(date.getHours(), date.getMinutes(), 0, 0);
+                        return next;
+                      });
+                    }}
+                  />
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity style={modal.picker} onPress={() => setShowTimePicker(true)}>
+                    <Ionicons name="time-outline" size={18} color={Colors.primary} />
+                    <Text style={modal.pickerText}>{formatTime(bookingDate)}</Text>
+                  </TouchableOpacity>
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={bookingDate}
+                      mode="time"
+                      is24Hour
+                      onChange={(_, date) => {
+                        setShowTimePicker(false);
+                        if (date) setBookingDate((prev) => {
+                          const next = new Date(prev);
+                          next.setHours(date.getHours(), date.getMinutes(), 0, 0);
+                          return next;
+                        });
+                      }}
+                    />
+                  )}
+                </>
               )}
+
+              {availability.length > 0 && (() => {
+                const dow = bookingDate.getDay();
+                const av = availability.find((a) => a.day_of_week === dow);
+                const DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                if (!av || !av.is_available) {
+                  return (
+                    <View style={modal.availHint}>
+                      <Ionicons name="warning-outline" size={13} color="#F59E0B" />
+                      <Text style={modal.availHintText}>{DAY_NAMES[dow]} 美甲师不接受预约</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <View style={modal.availHint}>
+                    <Ionicons name="time-outline" size={13} color="#10B981" />
+                    <Text style={[modal.availHintText, { color: '#10B981' }]}>
+                      {DAY_NAMES[dow]} 可预约：{av.start_time} - {av.end_time}
+                    </Text>
+                  </View>
+                );
+              })()}
 
               <View style={modal.labelRow}>
                 <Text style={modal.label}>参考图片</Text>
@@ -618,6 +700,11 @@ const modal = StyleSheet.create({
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
   },
   pickerText: { fontSize: 15, color: Colors.text },
+  availHint: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginTop: 6, paddingHorizontal: 2,
+  },
+  availHintText: { fontSize: 12, color: '#F59E0B' },
   noteInput: {
     borderWidth: 1.5, borderColor: Colors.border, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 10,
