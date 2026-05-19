@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator';
 import { Request } from 'express';
 import { AuthRequest } from '../middlewares/auth';
 import { getArtistProfile, getArtistStyles, updateArtist, findArtistByUserId, listArtists } from '../repositories/artistRepository';
-import { toggleFollow, getFollowerCount } from '../repositories/followRepository';
+import { toggleFollow, getFollowerCount, getMyFollowers } from '../repositories/followRepository';
 import { getReceivedComments } from '../repositories/interactionRepository';
 
 export async function listArtistsHandler(req: AuthRequest, res: Response): Promise<void> {
@@ -22,6 +22,11 @@ export async function getMyProfile(req: AuthRequest, res: Response): Promise<voi
 export async function getMyReceivedComments(req: AuthRequest, res: Response): Promise<void> {
   const comments = await getReceivedComments(req.userId!);
   res.json({ success: true, data: comments });
+}
+
+export async function getMyFollowersHandler(req: AuthRequest, res: Response): Promise<void> {
+  const followers = await getMyFollowers(req.userId!);
+  res.json({ success: true, data: followers });
 }
 
 export async function getProfile(req: AuthRequest, res: Response): Promise<void> {

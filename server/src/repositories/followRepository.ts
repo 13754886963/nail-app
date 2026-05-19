@@ -57,3 +57,21 @@ export async function getFollowerCount(userId: string): Promise<number> {
   );
   return Number(result.rows[0]!.count);
 }
+
+export interface Follower {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
+export async function getMyFollowers(artistUserId: string): Promise<Follower[]> {
+  const result = await pool.query<Follower>(
+    `SELECT u.id, u.name, u.avatar_url
+     FROM follows f
+     JOIN users u ON u.id = f.follower_id
+     WHERE f.following_id = $1
+     ORDER BY f.created_at DESC`,
+    [artistUserId]
+  );
+  return result.rows;
+}

@@ -4,6 +4,7 @@ import {
   listArtistsHandler,
   getMyProfile,
   getMyReceivedComments,
+  getMyFollowersHandler,
   getProfile,
   getStyles,
   followArtist,
@@ -23,6 +24,7 @@ const router = Router();
 router.get('/',                        authenticate, listArtistsHandler);
 router.get('/me',                      authenticate, getMyProfile);
 router.get('/me/received-comments',    authenticate, getMyReceivedComments);
+router.get('/me/followers',            authenticate, getMyFollowersHandler);
 router.get('/me/availability',         authenticate, getMyAvailability);
 router.patch('/me',                    authenticate, updateArtistValidation, updateArtistProfile);
 router.put('/me/availability',         authenticate, setAvailabilityValidation, setAvailability);

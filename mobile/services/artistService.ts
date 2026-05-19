@@ -83,3 +83,14 @@ export async function apiGetMyReceivedComments(): Promise<ReceivedComment[]> {
   const res = await apiClient.get<{ success: boolean; data: ReceivedComment[] }>('/artists/me/received-comments');
   return res.data.data;
 }
+
+export interface Follower {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
+export async function apiGetMyFollowers(): Promise<Follower[]> {
+  const res = await apiClient.get<{ success: boolean; data: Follower[] }>('/artists/me/followers');
+  return res.data.data;
+}
