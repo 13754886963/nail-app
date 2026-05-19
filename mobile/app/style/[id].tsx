@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -23,6 +24,7 @@ const IMG_H = Dimensions.get('window').width * (4 / 3);
 export default function StyleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const currentUser = useAuthStore((s) => s.user);
   const userRole = currentUser?.role;
   const userId = currentUser?.id;
@@ -299,7 +301,21 @@ export default function StyleDetailScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Comments — moved above book button */}
+          {/* Book button — only for customers */}
+          {userRole === 'customer' && (
+            <View style={styles.bookSection}>
+              <TouchableOpacity
+                style={styles.bookBtn}
+                activeOpacity={0.85}
+                onPress={() => setBookingVisible(true)}
+              >
+                <Ionicons name="calendar-outline" size={18} color="#fff" />
+                <Text style={styles.bookBtnText}>预约此款式</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Comments */}
           <View style={styles.commentsSection}>
             <Text style={styles.commentsTitle}>评论 ({detail.comment_count})</Text>
             {comments.length === 0 ? (
@@ -315,25 +331,11 @@ export default function StyleDetailScreen() {
             )}
           </View>
 
-          {/* Book button — only for customers */}
-          {userRole === 'customer' && (
-            <View style={styles.bookSection}>
-              <TouchableOpacity
-                style={styles.bookBtn}
-                activeOpacity={0.85}
-                onPress={() => setBookingVisible(true)}
-              >
-                <Ionicons name="calendar-outline" size={18} color="#fff" />
-                <Text style={styles.bookBtnText}>预约此款式</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
           <View style={{ height: 80 }} />
         </ScrollView>
 
         {/* Comment input */}
-        <View style={styles.inputArea}>
+        <View style={[styles.inputArea, { paddingBottom: insets.bottom || 8 }]}>
           {replyTarget && (
             <View style={styles.replyBanner}>
               <Text style={styles.replyBannerText}>回复 @{replyTarget.userName}</Text>
