@@ -185,6 +185,22 @@ export default function AppointmentDetailScreen() {
           />
         </View>
 
+        {/* Reference images */}
+        {appt.reference_images.length > 0 && (
+          <View style={styles.refSection}>
+            <View style={styles.refHeader}>
+              <Ionicons name="images-outline" size={15} color={Colors.textSecondary} />
+              <Text style={styles.refTitle}>参考图</Text>
+              <Text style={styles.refCount}>{appt.reference_images.length} 张</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.refScroll}>
+              {appt.reference_images.map((uri, i) => (
+                <Image key={i} source={{ uri }} style={styles.refImage} contentFit="cover" />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Note / reject reason */}
         {(appt.note || appt.reject_reason) && (
           <View style={styles.card}>
@@ -509,6 +525,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background, marginHorizontal: 16, borderRadius: 16, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
   },
+
+  refSection: {
+    marginHorizontal: 16,
+    backgroundColor: Colors.background, borderRadius: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    paddingVertical: 14, gap: 10,
+  },
+  refHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16 },
+  refTitle: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  refCount: { fontSize: 12, color: Colors.border, marginLeft: 2 },
+  refScroll: { paddingHorizontal: 16, gap: 10 },
+  refImage: { width: 110, height: 110, borderRadius: 10 },
 
   reviewSection: { marginHorizontal: 16, gap: 10 },
   reviewSectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text },
