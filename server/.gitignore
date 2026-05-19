@@ -3,5 +3,4 @@ dist/
 uploads/
 .env
 .env.local
-.env.production
 *.js.map
