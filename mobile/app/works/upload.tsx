@@ -72,7 +72,7 @@ export default function UploadWorkScreen() {
         {/* Image picker */}
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage} activeOpacity={0.8}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
+            <Image source={{ uri: imageUri }} style={styles.previewImage} contentFit="cover" />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Ionicons name="add-circle-outline" size={48} color={Colors.primaryLight} />

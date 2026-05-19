@@ -201,7 +201,7 @@ function ArtistApptCard({
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={onPress}>
       {item.style_image_url ? (
-        <Image source={{ uri: item.style_image_url }} style={styles.thumb} resizeMode="cover" />
+        <Image source={{ uri: item.style_image_url }} style={styles.thumb} contentFit="cover" />
       ) : (
         <View style={[styles.thumb, styles.thumbPlaceholder]}>
           <Ionicons name="image-outline" size={24} color={Colors.border} />

@@ -237,7 +237,7 @@ export default function StyleDetailScreen() {
 
           {/* Image */}
           {detail.image_url ? (
-            <Image source={{ uri: detail.image_url }} style={styles.image} resizeMode="cover" />
+            <Image source={{ uri: detail.image_url }} style={styles.image} contentFit="cover" />
           ) : (
             <View style={[styles.image, styles.imagePlaceholder]} />
           )}

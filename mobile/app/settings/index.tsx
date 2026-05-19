@@ -96,13 +96,15 @@ export default function SettingsScreen() {
         text: '清除',
         style: 'destructive',
         onPress: async () => {
-          await Promise.all([
-            Image.clearDiskCache(),
-            Image.clearMemoryCache(),
-            FileSystem.cacheDirectory
-              ? FileSystem.deleteAsync(FileSystem.cacheDirectory, { idempotent: true })
-              : Promise.resolve(),
-          ]);
+          await Promise.all([Image.clearDiskCache(), Image.clearMemoryCache()]);
+          if (FileSystem.cacheDirectory) {
+            const items = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory).catch(() => [] as string[]);
+            await Promise.all(
+              items.map((item) =>
+                FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${item}`, { idempotent: true }).catch(() => {})
+              )
+            );
+          }
           setCacheSize('0 B');
           Alert.alert('完成', '缓存已清除');
         },

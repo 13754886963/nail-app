@@ -140,7 +140,7 @@ export default function ArtistPublicProfile() {
           <ImageBackground
             source={{ uri: profile.background_url || styles[0]?.image_url || FALLBACK_BG }}
             style={[s.headerBg, { height: HEADER_H + insets.top }]}
-            resizeMode="cover"
+            contentFit="cover"
           >
             <View style={s.overlayWrap}>
               <View style={s.overlay} />
@@ -265,7 +265,7 @@ export default function ArtistPublicProfile() {
                           onPress={() => router.push(`/style/${item.id}`)}
                         >
                           {item.image_url ? (
-                            <Image source={{ uri: item.image_url }} style={s.cardImage} resizeMode="cover" />
+                            <Image source={{ uri: item.image_url }} style={s.cardImage} contentFit="cover" />
                           ) : (
                             <View style={[s.cardImage, s.cardPlaceholder]} />
                           )}

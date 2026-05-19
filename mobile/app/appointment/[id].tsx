@@ -145,7 +145,7 @@ export default function AppointmentDetailScreen() {
             activeOpacity={0.92}
             onPress={() => appt.style_id && router.push(`/style/${appt.style_id}`)}
           >
-            <Image source={{ uri: appt.style_image_url }} style={styles.styleImage} resizeMode="cover" />
+            <Image source={{ uri: appt.style_image_url }} style={styles.styleImage} contentFit="cover" />
             <View style={styles.imageOverlay}>
               <Text style={styles.imageTip}>查看款式详情</Text>
               <Ionicons name="chevron-forward" size={14} color="#fff" />

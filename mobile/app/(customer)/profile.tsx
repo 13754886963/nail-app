@@ -77,7 +77,7 @@ export default function CustomerProfileScreen() {
           <ImageBackground
             source={{ uri: user.background_url }}
             style={[styles.headerBg, { height: HEADER_H + insets.top }]}
-            resizeMode="cover"
+            contentFit="cover"
           >
             <View style={styles.overlayWrap}><View style={styles.overlay} /></View>
             <TouchableOpacity
@@ -144,7 +144,7 @@ export default function CustomerProfileScreen() {
                       onPress={() => router.push(`/style/${item.id}`)}
                     >
                       {item.image_url
-                        ? <Image source={{ uri: item.image_url }} style={styles.cardImage} resizeMode="cover" />
+                        ? <Image source={{ uri: item.image_url }} style={styles.cardImage} contentFit="cover" />
                         : <View style={[styles.cardImage, styles.cardPlaceholder]} />}
                       <View style={styles.cardInfo}>
                         <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
@@ -253,7 +253,7 @@ export default function CustomerProfileScreen() {
                   onPress={() => router.push(`/style/${c.style_id}`)}
                 >
                   {c.style_image_url
-                    ? <Image source={{ uri: c.style_image_url }} style={commentCard.thumb} resizeMode="cover" />
+                    ? <Image source={{ uri: c.style_image_url }} style={commentCard.thumb} contentFit="cover" />
                     : <View style={[commentCard.thumb, commentCard.thumbPlaceholder]} />}
                   <View style={commentCard.body}>
                     <Text style={commentCard.styleTitle} numberOfLines={1}>{c.style_title}</Text>

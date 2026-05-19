@@ -73,7 +73,7 @@ export default function ArtistProfileScreen() {
         <ImageBackground
           source={{ uri: user.background_url || works[0]?.image_url || FALLBACK_BG }}
           style={[styles.headerBg, { height: HEADER_H + insets.top }]}
-          resizeMode="cover"
+          contentFit="cover"
         >
           <View style={styles.overlayWrap}><View style={styles.overlay} /></View>
           <TouchableOpacity
@@ -157,7 +157,7 @@ export default function ArtistProfileScreen() {
                       onPress={() => router.push(`/style/${item.id}`)}
                     >
                       {item.image_url
-                        ? <Image source={{ uri: item.image_url }} style={styles.cardImage} resizeMode="cover" />
+                        ? <Image source={{ uri: item.image_url }} style={styles.cardImage} contentFit="cover" />
                         : <View style={[styles.cardImage, styles.cardPlaceholder]} />}
                       <View style={styles.cardInfo}>
                         <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
@@ -198,7 +198,7 @@ export default function ArtistProfileScreen() {
                     <Text style={rcCard.content} numberOfLines={3}>{c.content}</Text>
                   </View>
                   {c.style_image_url
-                    ? <Image source={{ uri: c.style_image_url }} style={rcCard.thumb} resizeMode="cover" />
+                    ? <Image source={{ uri: c.style_image_url }} style={rcCard.thumb} contentFit="cover" />
                     : null}
                 </TouchableOpacity>
               ))}

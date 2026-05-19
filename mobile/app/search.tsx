@@ -252,7 +252,7 @@ function StyleCard({ item }: { item: NailStyle }) {
       onPress={() => router.push(`/style/${item.id}`)}
     >
       {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={card.image} resizeMode="cover" />
+        <Image source={{ uri: item.image_url }} style={card.image} contentFit="cover" />
       ) : (
         <View style={[card.image, card.placeholder]} />
       )}

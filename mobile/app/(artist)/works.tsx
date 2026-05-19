@@ -150,7 +150,7 @@ function WorkCard({ item, onDelete }: { item: NailStyle; onDelete: () => void })
       onLongPress={onDelete}
     >
       {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={styles.cardImage} resizeMode="cover" />
+        <Image source={{ uri: item.image_url }} style={styles.cardImage} contentFit="cover" />
       ) : (
         <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
           <Ionicons name="image-outline" size={32} color={Colors.border} />
