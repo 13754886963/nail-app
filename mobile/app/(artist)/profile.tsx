@@ -23,7 +23,8 @@ const AVATAR_SIZE = 88;
 const COLS = 2;
 const GAP = 10;
 const PADDING = 16;
-const ITEM_W = (Dimensions.get('window').width - PADDING * 2 - GAP) / COLS;
+const GRID_PAD = 12;
+const ITEM_W = (Dimensions.get('window').width - PADDING * 2 - GRID_PAD * 2 - GAP) / COLS;
 
 type Tab = 'works' | 'received-comments';
 
@@ -78,7 +79,9 @@ export default function ArtistProfileScreen() {
     return acc;
   }, []);
 
-  const hasRating = (artistProfile?.avg_rating ?? 0) > 0;
+  const ratingStr = Number(artistProfile?.avg_rating ?? 0) > 0
+    ? `★ ${Number(artistProfile!.avg_rating).toFixed(1)}`
+    : '★ --';
 
   return (
     <View style={styles.root}>
@@ -116,11 +119,9 @@ export default function ArtistProfileScreen() {
             <View style={styles.artistBadge}>
               <Text style={styles.artistBadgeText}>美甲师</Text>
             </View>
-            {hasRating && (
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>★ {artistProfile!.avg_rating.toFixed(1)}</Text>
-              </View>
-            )}
+            <View style={styles.ratingBadge}>
+              <Text style={styles.ratingText}>{ratingStr}</Text>
+            </View>
           </View>
 
           {user.location ? (

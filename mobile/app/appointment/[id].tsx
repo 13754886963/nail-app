@@ -387,73 +387,85 @@ export default function AppointmentDetailScreen() {
       </Modal>
 
       {/* Artist reply modal */}
-      <Modal visible={replyModal} animationType="slide" transparent>
-        <View style={modal.overlay}>
-          <View style={modal.sheet}>
-            <View style={modal.handle} />
-            <Text style={modal.title}>回复评价</Text>
-            <TextInput
-              style={modal.input}
-              value={replyText}
-              onChangeText={setReplyText}
-              placeholder="感谢顾客的评价，写下你的回复..."
-              placeholderTextColor={Colors.textSecondary}
-              multiline
-              maxLength={500}
-              autoFocus
-            />
-            <View style={modal.btnRow}>
-              <TouchableOpacity style={modal.cancelBtn} onPress={() => setReplyModal(false)}>
-                <Text style={modal.cancelText}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[modal.submitBtn, (!replyText.trim() || replySubmitting) && { opacity: 0.5 }]}
-                disabled={!replyText.trim() || replySubmitting}
-                onPress={handleSubmitReply}
-              >
-                {replySubmitting
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={modal.submitText}>提交回复</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+      <Modal visible={replyModal} animationType="slide" transparent onRequestClose={() => { Keyboard.dismiss(); setReplyModal(false); }}>
+        <TouchableOpacity style={modal.backdrop} activeOpacity={1} onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={modal.kav}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={modal.sheet}>
+                <View style={modal.handle} />
+                <Text style={modal.title}>回复评价</Text>
+                <TextInput
+                  style={modal.input}
+                  value={replyText}
+                  onChangeText={setReplyText}
+                  placeholder="感谢顾客的评价，写下你的回复..."
+                  placeholderTextColor={Colors.textSecondary}
+                  multiline
+                  maxLength={500}
+                  autoFocus
+                  returnKeyType="done"
+                  blurOnSubmit
+                />
+                <View style={modal.btnRow}>
+                  <TouchableOpacity style={modal.cancelBtn} onPress={() => { Keyboard.dismiss(); setReplyModal(false); }}>
+                    <Text style={modal.cancelText}>取消</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[modal.submitBtn, (!replyText.trim() || replySubmitting) && { opacity: 0.5 }]}
+                    disabled={!replyText.trim() || replySubmitting}
+                    onPress={handleSubmitReply}
+                  >
+                    {replySubmitting
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={modal.submitText}>提交回复</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
 
       {/* Review modal */}
-      <Modal visible={reviewModal} animationType="slide" transparent>
-        <View style={modal.overlay}>
-          <View style={modal.sheet}>
-            <View style={modal.handle} />
-            <Text style={modal.title}>评价服务</Text>
-            <Text style={modal.label}>服务评分</Text>
-            <StarSelector value={rating} onChange={setRating} />
-            <Text style={modal.label}>评价内容（选填）</Text>
-            <TextInput
-              style={modal.input}
-              value={comment}
-              onChangeText={setComment}
-              placeholder="分享一下你的服务体验..."
-              placeholderTextColor={Colors.textSecondary}
-              multiline
-              maxLength={500}
-            />
-            <View style={modal.btnRow}>
-              <TouchableOpacity style={modal.cancelBtn} onPress={() => setReviewModal(false)}>
-                <Text style={modal.cancelText}>取消</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[modal.submitBtn, submitting && { opacity: 0.6 }]}
-                disabled={submitting}
-                onPress={handleSubmitReview}
-              >
-                {submitting
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={modal.submitText}>提交评价</Text>}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+      <Modal visible={reviewModal} animationType="slide" transparent onRequestClose={() => { Keyboard.dismiss(); setReviewModal(false); }}>
+        <TouchableOpacity style={modal.backdrop} activeOpacity={1} onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={modal.kav}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View style={modal.sheet}>
+                <View style={modal.handle} />
+                <Text style={modal.title}>评价服务</Text>
+                <Text style={modal.label}>服务评分</Text>
+                <StarSelector value={rating} onChange={setRating} />
+                <Text style={modal.label}>评价内容（选填）</Text>
+                <TextInput
+                  style={modal.input}
+                  value={comment}
+                  onChangeText={setComment}
+                  placeholder="分享一下你的服务体验..."
+                  placeholderTextColor={Colors.textSecondary}
+                  multiline
+                  maxLength={500}
+                  returnKeyType="done"
+                  blurOnSubmit
+                />
+                <View style={modal.btnRow}>
+                  <TouchableOpacity style={modal.cancelBtn} onPress={() => { Keyboard.dismiss(); setReviewModal(false); }}>
+                    <Text style={modal.cancelText}>取消</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[modal.submitBtn, submitting && { opacity: 0.6 }]}
+                    disabled={submitting}
+                    onPress={handleSubmitReview}
+                  >
+                    {submitting
+                      ? <ActivityIndicator size="small" color="#fff" />
+                      : <Text style={modal.submitText}>提交评价</Text>}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
 
       {/* Full-screen image viewer */}
@@ -683,7 +695,6 @@ const viewer = StyleSheet.create({
 const modal = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
   kav: { flex: 1, justifyContent: 'flex-end' },
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
     backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     paddingHorizontal: 20, paddingBottom: 40, paddingTop: 12,

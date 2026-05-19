@@ -232,7 +232,7 @@ export default function ArtistPublicProfile() {
             <View style={s.sep} />
             <View style={s.statItem}>
               <Text style={s.statValue}>
-                {profile.avg_rating > 0 ? `★ ${profile.avg_rating.toFixed(1)}` : '--'}
+                {Number(profile.avg_rating) > 0 ? `★ ${Number(profile.avg_rating).toFixed(1)}` : '--'}
               </Text>
               <Text style={s.statLabel}>评分</Text>
             </View>

@@ -304,6 +304,11 @@ export function DiscoverFeed() {
   );
 }
 
+function calcServiceScore(avgRating: number, reviewCount: number): number | null {
+  if (reviewCount === 0) return null;
+  return Math.round(Number(avgRating) * 20 * Math.min(reviewCount, 10) / 10);
+}
+
 function ArtistCard({
   artist,
   onToggleFollow,
@@ -315,6 +320,12 @@ function ArtistCard({
 }) {
   const router = useRouter();
   const isSelf = artist.user_id === currentUserId;
+  const score = calcServiceScore(artist.avg_rating, artist.review_count);
+  const scoreColor = score === null ? Colors.textSecondary
+    : score >= 80 ? '#10B981'
+    : score >= 50 ? '#F59E0B'
+    : '#EF4444';
+
   return (
     <TouchableOpacity
       style={ac.wrap}
@@ -336,10 +347,12 @@ function ArtistCard({
           </View>
         ) : null}
         <View style={ac.statsRow}>
-          {artist.avg_rating > 0 && (
-            <Text style={ac.stat}>★ {artist.avg_rating.toFixed(1)}</Text>
-          )}
-          <Text style={ac.stat}>{artist.works_count} 作品</Text>
+          <View style={[ac.scoreBadge, { backgroundColor: scoreColor + '18' }]}>
+            <Text style={[ac.scoreText, { color: scoreColor }]}>
+              服务分 {score !== null ? score : '--'}
+            </Text>
+          </View>
+          <Text style={ac.stat}>{artist.served_count} 完成</Text>
           <Text style={ac.stat}>{artist.follower_count} 粉丝</Text>
         </View>
       </View>
@@ -466,8 +479,10 @@ const ac = StyleSheet.create({
   badgeText: { fontSize: 10, color: Colors.primary, fontWeight: '600' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   meta: { fontSize: 12, color: Colors.textSecondary },
-  statsRow: { flexDirection: 'row', gap: 8, marginTop: 1 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 1 },
   stat: { fontSize: 12, color: Colors.textSecondary },
+  scoreBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 },
+  scoreText: { fontSize: 12, fontWeight: '700' },
   followBtn: {
     paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
     backgroundColor: Colors.primary,
