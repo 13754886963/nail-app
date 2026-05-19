@@ -12,6 +12,7 @@ export interface Appointment {
   style_id: string | null;
   style_title: string | null;
   style_image_url: string | null;
+  reference_images: string[];
   scheduled_at: Date;
   note: string | null;
   status: AppointmentStatus;
@@ -27,7 +28,8 @@ const SELECT_APPOINTMENT = `
     ar.user_id AS artist_user_id,
     au.name  AS artist_name,
     ns.title AS style_title,
-    (SELECT image_url FROM style_images si WHERE si.style_id = ns.id ORDER BY si.sort_order LIMIT 1) AS style_image_url
+    (SELECT image_url FROM style_images si WHERE si.style_id = ns.id ORDER BY si.sort_order LIMIT 1) AS style_image_url,
+    ARRAY(SELECT ai.image_url FROM appointment_images ai WHERE ai.appointment_id = a.id ORDER BY ai.sort_order, ai.created_at) AS reference_images
   FROM appointments a
   JOIN users    cu ON cu.id = a.customer_id
   JOIN artists  ar ON ar.id = a.artist_id
@@ -76,6 +78,15 @@ export async function getAppointmentById(id: string): Promise<Appointment | null
     [id]
   );
   return result.rows[0] ?? null;
+}
+
+export async function saveAppointmentImages(appointmentId: string, imageUrls: string[]): Promise<void> {
+  if (imageUrls.length === 0) return;
+  const placeholders = imageUrls.map((_, i) => `($1, $${i + 2}, ${i})`).join(', ');
+  await pool.query(
+    `INSERT INTO appointment_images (appointment_id, image_url, sort_order) VALUES ${placeholders}`,
+    [appointmentId, ...imageUrls]
+  );
 }
 
 export async function updateAppointmentStatus(

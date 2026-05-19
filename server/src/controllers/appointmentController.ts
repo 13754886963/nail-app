@@ -4,12 +4,15 @@ import { AuthRequest } from '../middlewares/auth';
 import { findArtistByUserId } from '../repositories/artistRepository';
 import {
   createAppointment,
+  saveAppointmentImages,
   getCustomerAppointments,
   getArtistAppointments,
   getAppointmentById,
   updateAppointmentStatus,
 } from '../repositories/appointmentRepository';
 import { createNotification } from '../repositories/notificationRepository';
+
+const BASE_URL = process.env['BASE_URL'] ?? `http://localhost:${process.env['PORT'] ?? 3000}`;
 
 export const createAppointmentValidation = [
   body('artistId').isUUID().withMessage('艺术师ID无效'),
@@ -29,6 +32,13 @@ export async function bookAppointment(req: AuthRequest, res: Response): Promise<
     res.status(422).json({ success: false, message: errors.array()[0]?.msg });
     return;
   }
+
+  const files = (req.files ?? []) as Express.Multer.File[];
+  if (files.length < 2) {
+    res.status(422).json({ success: false, message: '请至少上传 2 张参考图片' });
+    return;
+  }
+
   const { artistId, scheduledAt, styleId, note } = req.body as {
     artistId: string;
     scheduledAt: string;
@@ -42,6 +52,9 @@ export async function bookAppointment(req: AuthRequest, res: Response): Promise<
     scheduledAt: new Date(scheduledAt),
     note: note ?? null,
   });
+
+  const imageUrls = files.map((f) => `${BASE_URL}/uploads/${f.filename}`);
+  await saveAppointmentImages(appointment.id, imageUrls);
   // 通知美甲师有新预约
   const dt = new Date(scheduledAt);
   const dateStr = dt.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });

@@ -5,6 +5,7 @@ import {
   Alert, Modal, TextInput, Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +51,7 @@ export default function ArtistPublicProfile() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [bookingNote, setBookingNote] = useState('');
+  const [bookingImages, setBookingImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -73,10 +75,31 @@ export default function ArtistPublicProfile() {
     setFollowLoading(false);
   };
 
+  const handlePickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('需要权限', '请在设置中允许访问相册');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - bookingImages.length,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setBookingImages((prev) => [...prev, ...result.assets].slice(0, 5));
+    }
+  };
+
   const handleBook = async () => {
     if (!profile) return;
     if (bookingDate <= new Date()) {
       Alert.alert('提示', '请选择未来的时间');
+      return;
+    }
+    if (bookingImages.length < 2) {
+      Alert.alert('提示', '请至少上传 2 张参考图片');
       return;
     }
     setSubmitting(true);
@@ -86,9 +109,15 @@ export default function ArtistPublicProfile() {
         scheduledAt: bookingDate.toISOString(),
         styleId: null,
         note: bookingNote.trim() || null,
+        images: bookingImages.map((img) => ({
+          uri: img.uri,
+          type: img.mimeType ?? 'image/jpeg',
+          fileName: img.fileName ?? `ref_${Date.now()}.jpg`,
+        })),
       });
       setBookingVisible(false);
       setBookingNote('');
+      setBookingImages([]);
       Alert.alert('预约成功', '已发送预约请求，等待美甲师确认');
     } catch {
       Alert.alert('失败', '预约发送失败，请重试');
@@ -380,6 +409,29 @@ export default function ArtistPublicProfile() {
                 />
               )}
 
+              <View style={modal.labelRow}>
+                <Text style={modal.label}>参考图片</Text>
+                <Text style={modal.labelHint}>{bookingImages.length}/5（至少 2 张）</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={modal.imageScroll}>
+                {bookingImages.map((img, i) => (
+                  <View key={img.uri} style={modal.imgWrap}>
+                    <Image source={{ uri: img.uri }} style={modal.imgThumb} contentFit="cover" />
+                    <TouchableOpacity
+                      style={modal.imgRemove}
+                      onPress={() => setBookingImages((prev) => prev.filter((_, idx) => idx !== i))}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {bookingImages.length < 5 && (
+                  <TouchableOpacity style={modal.imgAdd} onPress={handlePickImages}>
+                    <Ionicons name="add" size={28} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+
               <Text style={modal.label}>备注（选填）</Text>
               <TextInput
                 style={modal.noteInput}
@@ -392,7 +444,7 @@ export default function ArtistPublicProfile() {
               />
 
               <View style={modal.btnRow}>
-                <TouchableOpacity style={modal.cancelBtn} onPress={() => setBookingVisible(false)}>
+                <TouchableOpacity style={modal.cancelBtn} onPress={() => { setBookingVisible(false); setBookingImages([]); }}>
                   <Text style={modal.cancelText}>取消</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -549,6 +601,17 @@ const modal = StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: '700', color: Colors.text, marginBottom: 20 },
   label: { fontSize: 13, color: Colors.textSecondary, marginBottom: 6, marginTop: 14 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 6 },
+  labelHint: { fontSize: 12, color: Colors.textSecondary },
+  imageScroll: { flexDirection: 'row' },
+  imgWrap: { position: 'relative', marginRight: 8 },
+  imgThumb: { width: 80, height: 80, borderRadius: 10 },
+  imgRemove: { position: 'absolute', top: -6, right: -6 },
+  imgAdd: {
+    width: 80, height: 80, borderRadius: 10,
+    borderWidth: 1.5, borderColor: Colors.border, borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center',
+  },
   picker: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     borderWidth: 1.5, borderColor: Colors.border,

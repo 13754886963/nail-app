@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/auth';
+import { upload } from '../config/upload';
 import {
   bookAppointment,
   myAppointments,
@@ -19,7 +20,7 @@ import {
 
 const router = Router();
 
-router.post('/',              authenticate, createAppointmentValidation, bookAppointment);
+router.post('/', authenticate, upload.array('images', 5), createAppointmentValidation, bookAppointment);
 router.get('/my',             authenticate, myAppointments);
 router.get('/incoming',       authenticate, incomingAppointments);
 router.get('/:id',            authenticate, getAppointment);

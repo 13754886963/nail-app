@@ -11,6 +11,7 @@ export interface Appointment {
   style_id: string | null;
   style_title: string | null;
   style_image_url: string | null;
+  reference_images: string[];
   scheduled_at: string;
   note: string | null;
   status: AppointmentStatus;
@@ -23,8 +24,25 @@ export async function apiBookAppointment(params: {
   scheduledAt: string;
   styleId?: string | null;
   note?: string | null;
+  images: { uri: string; type?: string; fileName?: string }[];
 }): Promise<Appointment> {
-  const res = await apiClient.post<{ success: boolean; data: Appointment }>('/appointments', params);
+  const form = new FormData();
+  form.append('artistId', params.artistId);
+  form.append('scheduledAt', params.scheduledAt);
+  if (params.styleId) form.append('styleId', params.styleId);
+  if (params.note) form.append('note', params.note);
+  params.images.forEach((img, i) => {
+    form.append('images', {
+      uri: img.uri,
+      type: img.type ?? 'image/jpeg',
+      name: img.fileName ?? `ref_${i}.jpg`,
+    } as unknown as Blob);
+  });
+  const res = await apiClient.post<{ success: boolean; data: Appointment }>(
+    '/appointments',
+    form,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
   return res.data.data;
 }
 
