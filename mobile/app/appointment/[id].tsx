@@ -336,7 +336,7 @@ export default function AppointmentDetailScreen() {
             <TouchableOpacity activeOpacity={1} onPress={() => {}}>
               <View style={modal.sheet}>
                 <View style={modal.handle} />
-                <Text style={modal.title}>选择拒绝原因</Text>
+                <Text style={modal.title}>拒绝原因（必填）</Text>
 
                 <View style={modal.presets}>
                   {REJECT_PRESETS.map((p) => (
@@ -367,11 +367,11 @@ export default function AppointmentDetailScreen() {
                     <Text style={modal.cancelText}>取消</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[modal.submitBtn, { backgroundColor: '#EF4444' }, actionLoading && { opacity: 0.6 }]}
-                    disabled={actionLoading}
+                    style={[modal.submitBtn, { backgroundColor: '#EF4444' }, (!rejectReason.trim() || actionLoading) && { opacity: 0.4 }]}
+                    disabled={!rejectReason.trim() || actionLoading}
                     onPress={async () => {
                       Keyboard.dismiss();
-                      await doAction('reject', rejectReason.trim() || undefined);
+                      await doAction('reject', rejectReason.trim());
                       setRejectModal(false);
                     }}
                   >

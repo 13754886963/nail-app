@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  View, Text, StyleSheet, SectionList, TouchableOpacity,
   ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -15,28 +15,17 @@ import { useBadgeStore } from '../../stores/badgeStore';
 import { Colors } from '../../constants/colors';
 import { BouncingDots } from '../../components/BouncingDots';
 
-type Filter = 'all' | 'pending' | 'confirmed' | 'completed' | 'closed';
+type Section = { title: string; data: Appointment[] };
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all',       label: '全部'   },
-  { key: 'pending',   label: '待确认' },
-  { key: 'confirmed', label: '已确认' },
-  { key: 'completed', label: '已完成' },
-  { key: 'closed',    label: '已结束' },
-];
-
-const EMPTY_TEXT: Record<Filter, string> = {
-  all:       '还没有预约记录',
-  pending:   '没有待确认的预约',
-  confirmed: '没有已确认的预约',
-  completed: '没有已完成的预约',
-  closed:    '没有已取消或拒绝的预约',
-};
-
-function matchesFilter(appt: Appointment, filter: Filter): boolean {
-  if (filter === 'all') return true;
-  if (filter === 'closed') return appt.status === 'cancelled' || appt.status === 'rejected';
-  return appt.status === filter;
+function groupAppointments(items: Appointment[]): Section[] {
+  const pending   = items.filter((a) => a.status === 'pending');
+  const confirmed = items.filter((a) => a.status === 'confirmed');
+  const history   = items.filter((a) => ['completed', 'rejected', 'cancelled'].includes(a.status));
+  const sections: Section[] = [];
+  if (pending.length)   sections.push({ title: '待处理', data: pending });
+  if (confirmed.length) sections.push({ title: '已确认', data: confirmed });
+  if (history.length)   sections.push({ title: '历史记录', data: history });
+  return sections;
 }
 
 export default function BookingScreen() {
@@ -45,7 +34,6 @@ export default function BookingScreen() {
   const [items, setItems] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<Filter>('all');
   const setCustomerPending = useBadgeStore((s) => s.setCustomerPending);
 
   const fetchData = useCallback(async (isRefresh = false) => {
@@ -66,9 +54,7 @@ export default function BookingScreen() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const onScrollEndDrag = useCallback((e: any) => {
-    if (e.nativeEvent.contentOffset.y < -60 && !refreshing) {
-      fetchData(true);
-    }
+    if (e.nativeEvent.contentOffset.y < -60 && !refreshing) fetchData(true);
   }, [fetchData, refreshing]);
 
   const handleCancel = (item: Appointment) => {
@@ -92,12 +78,7 @@ export default function BookingScreen() {
     ]);
   };
 
-  const filtered = useMemo(
-    () => items.filter((a) => matchesFilter(a, activeFilter)),
-    [items, activeFilter]
-  );
-
-  const countFor = (f: Filter) => items.filter((a) => matchesFilter(a, f)).length;
+  const sections = groupAppointments(items);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -108,48 +89,29 @@ export default function BookingScreen() {
         </View>
       </View>
 
-      {/* Filter tabs */}
-      <View style={styles.tabs}>
-        {FILTERS.map(({ key, label }) => {
-          const count = key !== 'all' ? countFor(key) : null;
-          const active = activeFilter === key;
-          return (
-            <TouchableOpacity
-              key={key}
-              style={styles.tab}
-              onPress={() => setActiveFilter(key)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                {label}{count !== null && count > 0 ? ` ${count}` : ''}
-              </Text>
-              {active && <View style={styles.tabIndicator} />}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
-        <FlatList
-          data={filtered}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={filtered.length === 0 ? styles.emptyContainer : styles.list}
+          contentContainerStyle={sections.length === 0 ? styles.emptyContainer : styles.list}
           showsVerticalScrollIndicator={false}
           onScrollEndDrag={onScrollEndDrag}
+          stickySectionHeadersEnabled={false}
           ListHeaderComponent={refreshing ? <BouncingDots /> : null}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="calendar-outline" size={60} color={Colors.border} />
-              <Text style={styles.emptyTitle}>{EMPTY_TEXT[activeFilter]}</Text>
-              {activeFilter === 'all' && (
-                <Text style={styles.emptySubtitle}>在发现页浏览款式并发起预约</Text>
-              )}
+              <Text style={styles.emptyTitle}>还没有预约记录</Text>
+              <Text style={styles.emptySubtitle}>在发现页浏览款式并发起预约</Text>
             </View>
           }
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionHeader}>{section.title}</Text>
+          )}
           renderItem={({ item }) => (
             <AppointmentCard
               item={item}
@@ -239,32 +201,21 @@ const styles = StyleSheet.create({
   titleAccent: { height: 3, width: 18, backgroundColor: Colors.primary, borderRadius: 2, marginTop: 3 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  tab: {
-    flex: 1, alignItems: 'center', paddingVertical: 11,
-  },
-  tabText: { fontSize: 12, fontWeight: '500', color: Colors.textSecondary },
-  tabTextActive: { color: Colors.primary, fontWeight: '700' },
-  tabIndicator: {
-    position: 'absolute', bottom: 0, left: 6, right: 6,
-    height: 2, backgroundColor: Colors.primary, borderRadius: 1,
-  },
-
   emptyContainer: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 120, gap: 10 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textSecondary },
   emptySubtitle: { fontSize: 13, color: Colors.border },
 
-  list: { padding: 16, gap: 12 },
+  list: { padding: 16 },
+  sectionHeader: {
+    fontSize: 13, fontWeight: '700', color: Colors.textSecondary,
+    marginBottom: 8, marginTop: 16,
+    textTransform: 'uppercase', letterSpacing: 0.5,
+  },
 
   card: {
     flexDirection: 'row', gap: 12,
-    backgroundColor: '#fff', borderRadius: 16,
+    backgroundColor: '#fff', borderRadius: 16, marginBottom: 10,
     overflow: 'hidden', minHeight: 110,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
