@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, TextInput, Modal,
+  ActivityIndicator, Alert, TextInput, Modal, FlatList, Dimensions,
+  StatusBar,
 } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +47,15 @@ export default function AppointmentDetailScreen() {
   const [replyModal, setReplyModal] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replySubmitting, setReplySubmitting] = useState(false);
+
+  // Image viewer
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
+
+  const openViewer = (images: string[], index: number) => {
+    setViewerImages(images);
+    setViewerIndex(index);
+  };
 
   useEffect(() => {
     apiGetAppointmentById(id)
@@ -139,8 +151,8 @@ export default function AppointmentDetailScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Style image */}
-        {appt.style_image_url ? (
+        {/* Style image — only shown when a style was selected */}
+        {appt.style_image_url && (
           <TouchableOpacity
             activeOpacity={0.92}
             onPress={() => appt.style_id && router.push(`/style/${appt.style_id}`)}
@@ -151,11 +163,6 @@ export default function AppointmentDetailScreen() {
               <Ionicons name="chevron-forward" size={14} color="#fff" />
             </View>
           </TouchableOpacity>
-        ) : (
-          <View style={[styles.styleImage, styles.imagePlaceholder]}>
-            <Ionicons name="image-outline" size={40} color={Colors.border} />
-            <Text style={styles.placeholderText}>未指定款式</Text>
-          </View>
         )}
 
         {/* Status + title */}
@@ -195,7 +202,9 @@ export default function AppointmentDetailScreen() {
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.refScroll}>
               {appt.reference_images.map((uri, i) => (
-                <Image key={i} source={{ uri }} style={styles.refImage} contentFit="cover" />
+                <TouchableOpacity key={i} activeOpacity={0.85} onPress={() => openViewer(appt.reference_images, i)}>
+                  <Image source={{ uri }} style={styles.refImage} contentFit="cover" />
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
@@ -423,6 +432,44 @@ export default function AppointmentDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Full-screen image viewer */}
+      <Modal
+        visible={viewerImages.length > 0}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewerImages([])}
+        statusBarTranslucent
+      >
+        <StatusBar hidden />
+        <View style={viewer.root}>
+          <FlatList
+            data={viewerImages}
+            keyExtractor={(_, i) => String(i)}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            initialScrollIndex={viewerIndex}
+            getItemLayout={(_, index) => ({ length: SCREEN_W, offset: SCREEN_W * index, index })}
+            onMomentumScrollEnd={(e) => {
+              setViewerIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_W));
+            }}
+            renderItem={({ item }) => (
+              <View style={{ width: SCREEN_W, alignItems: 'center', justifyContent: 'center' }}>
+                <Image source={{ uri: item }} style={viewer.img} contentFit="contain" />
+              </View>
+            )}
+          />
+          <TouchableOpacity style={[viewer.closeBtn, { top: insets.top + 12 }]} onPress={() => setViewerImages([])}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+          {viewerImages.length > 1 && (
+            <View style={viewer.counter}>
+              <Text style={viewer.counterText}>{viewerIndex + 1} / {viewerImages.length}</Text>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -502,8 +549,6 @@ const styles = StyleSheet.create({
   content: { gap: 12 },
 
   styleImage: { width: '100%', height: 260 },
-  imagePlaceholder: { backgroundColor: '#EBEBEB', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  placeholderText: { fontSize: 14, color: Colors.textSecondary },
   imageOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
@@ -593,6 +638,23 @@ const infoRow = StyleSheet.create({
 const btn = StyleSheet.create({
   base: { paddingVertical: 15, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: 15, fontWeight: '700' },
+});
+
+const viewer = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  img: { width: SCREEN_W, height: '100%' },
+  closeBtn: {
+    position: 'absolute', right: 16,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  counter: {
+    position: 'absolute', bottom: 40, alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20,
+  },
+  counterText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 });
 
 const modal = StyleSheet.create({
