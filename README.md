@@ -5,48 +5,63 @@
 ## 功能
 
 - 作品发现：瀑布流浏览美甲作品，支持分类筛选
-- 美甲师主页：个人简介、作品集、评分
-- 预约系统：顾客在线预约，美甲师管理预约状态
-- 评论与回复：微博风格嵌套回复，支持 @用户
-- 收藏：收藏喜欢的作品
-- 评价：预约完成后发布评价
-- 通知：系统消息推送
+- 美甲师列表：含服务分（基于评分 × 评价数加权）、完成单数
+- 美甲师主页：个人简介、作品集、收到的评论、粉丝列表、评分展示
+- 预约系统：顾客在线预约（含参考图上传）、美甲师管理预约状态（确认/拒绝/完成）
+- 可预约时间设置：美甲师设定每周可用时间段，顾客预约时实时校验
+- 评价系统：预约完成后顾客发布评价（1-5星+文字），美甲师可回复
+- 评论：作品详情页评论，支持点赞/收藏
 - 双角色：同一账号支持美甲师 / 顾客两种身份
 
 ## 技术栈
 
-**Mobile** — React Native (Expo 54) + TypeScript
-- 路由：expo-router (file-based)
-- 状态管理：Zustand
+**Mobile** — React Native 0.81.5 + Expo SDK 54 + TypeScript
+- 路由：expo-router 6（file-based）
+- 状态管理：Zustand 5
 - HTTP：Axios
+- 图片：expo-image
 - 图标：@expo/vector-icons (Ionicons)
+- 日期选择：@react-native-community/datetimepicker
+- 安全存储：expo-secure-store
+- New Architecture 已启用（`newArchEnabled: true`）
 
-**Server** — Node.js + Express 5 + TypeScript
-- 数据库：PostgreSQL (pg)
-- 认证：JWT (jsonwebtoken) + bcryptjs
-- 文件上传：Multer
-- 安全：Helmet + CORS
+**Server** — Node.js 20 + Express 5 + TypeScript
+- 数据库：PostgreSQL（pg）
+- 认证：JWT（jsonwebtoken）+ bcryptjs
+- 文件上传：Multer → 本地 `uploads/` 目录
+- 进程管理（生产）：PM2
 
 ## 目录结构
 
 ```
 nail-app/
-├── mobile/          # Expo React Native 应用
-│   ├── app/         # 页面（file-based routing）
-│   ├── components/  # 公共组件
-│   ├── services/    # API 请求层
-│   ├── stores/      # Zustand 状态
-│   └── constants/   # 颜色等常量
-├── server/          # Express API 服务
+├── mobile/
+│   ├── app/
+│   │   ├── (auth)/          # 登录、注册
+│   │   ├── (customer)/      # 顾客 Tab：发现/预约/我的
+│   │   ├── (artist)/        # 美甲师 Tab：发现/作品/预约管理/我的
+│   │   ├── artist/[id].tsx  # 美甲师公开主页（顾客视角）
+│   │   ├── style/[id].tsx   # 作品详情
+│   │   ├── appointment/[id].tsx  # 预约详情
+│   │   ├── works/upload.tsx # 作品上传
+│   │   └── settings/        # 设置（个人资料、可预约时间等）
+│   ├── components/
+│   │   ├── DiscoverFeed.tsx # 发现页（作品+美甲师 Tab）
+│   │   ├── Avatar.tsx
+│   │   └── BouncingDots.tsx # 下拉刷新动画
+│   ├── services/            # API 请求层
+│   ├── stores/              # Zustand（authStore、badgeStore）
+│   └── constants/           # colors.ts
+├── server/
 │   ├── src/
 │   │   ├── controllers/
 │   │   ├── repositories/
 │   │   ├── routes/
 │   │   ├── middlewares/
-│   │   ├── services/
 │   │   └── config/
-│   └── migrations/  # SQL 迁移文件
-└── shared/          # 共享类型定义
+│   ├── migrations/          # 001~019 SQL 迁移
+│   └── uploads/             # 上传的图片（生产环境配置持久存储）
+└── shared/                  # 共享类型定义
 ```
 
 ## 本地开发
@@ -54,70 +69,124 @@ nail-app/
 ### 前置条件
 
 - Node.js 20+
-- PostgreSQL
-- Expo Go（手机）或模拟器
+- PostgreSQL（本地已建库 `nail_app`）
+- 手机安装 Expo Go（注意：本项目含原生模块，**需要 Development Build**，无法直接用标准 Expo Go）
 
-### Server
+### 1. Server
 
 ```bash
 cd server
 npm install
-
-# 复制环境变量模板并填写
-cp .env.example .env.local
-
-# 执行数据库迁移
-bash migrations/run.sh
-
-# 启动开发服务器
-npm run dev
+cp .env.example .env.local   # 填写 DB 信息和 JWT_SECRET
 ```
 
-### Mobile
+执行数据库迁移（001 ~ 019 按顺序）：
+
+```bash
+# macOS / Linux（无密码本地 PostgreSQL）
+for f in migrations/0*.sql; do psql -U <DB_USER> -d nail_app -f "$f"; done
+
+# 或逐个执行
+psql -U <DB_USER> -d nail_app -f migrations/001_create_users.sql
+# ... 到 019
+```
+
+启动开发服务器：
+
+```bash
+npm run dev    # ts-node-dev，改动自动重启，监听 :3000
+```
+
+### 2. Mobile
 
 ```bash
 cd mobile
 npm install
-
-# 启动 Expo
-npm start
 ```
 
-扫描二维码或按 `i` / `a` 启动模拟器。
+**修改 API 地址**（开发时指向本机局域网 IP）：
 
-`mobile/services/api.ts` 中的 `BASE_URL` 改为本机局域网 IP（如 `http://192.168.x.x:3000`）。
+`mobile/services/api.ts` 中：
+```ts
+const BASE_URL = process.env['EXPO_PUBLIC_API_URL'] ?? 'http://<你的局域网IP>:3000/api';
+```
 
-## 生产部署（EC2）
+或在 `mobile/.env` 中设置：
+```
+EXPO_PUBLIC_API_URL=http://192.168.x.x:3000/api
+```
+
+启动：
 
 ```bash
-# 安装依赖 & 编译
-cd server
-npm install
-npm run build
-
-# 填写生产环境变量
-cp .env.example .env.production
-# 编辑 .env.production，填入 DB 信息、JWT_SECRET、域名等
-
-# 用 pm2 启动
-NODE_ENV=production pm2 start dist/index.js --name nail-app
+npx expo start
 ```
 
-### 环境变量说明
+> 由于项目使用了 `@react-native-community/datetimepicker` 等原生模块，需要构建 Development Build 而非直接使用标准 Expo Go：
+> ```bash
+> eas build --profile development --platform android  # 或 ios
+> ```
+
+## 生产环境（AWS EC2）
+
+**当前部署：** `ubuntu@54.248.67.35`，SSH Key：`/Users/gyuukaki/Documents/project/AWS/aws-key.pem`
+
+```bash
+ssh -i /path/to/aws-key.pem ubuntu@54.248.67.35
+```
+
+### 部署流程
+
+```bash
+cd /home/ubuntu/nail-app
+
+# 拉取最新代码
+git pull origin main
+
+# 编译
+cd server && npm run build
+
+# 重启服务
+pm2 restart nail-app
+pm2 status
+```
+
+### 数据库迁移（EC2）
+
+EC2 上的 PostgreSQL 使用密码认证，需加 `-h localhost`：
+
+```bash
+PGPASSWORD=$(grep DB_PASSWORD /home/ubuntu/nail-app/server/.env.production | cut -d= -f2) \
+  psql -h localhost -U nailapp -d nail_app -f migrations/0XX_xxx.sql
+```
+
+### PM2 路径（nvm 环境）
+
+```bash
+~/.nvm/versions/node/$(ls ~/.nvm/versions/node | tail -1)/bin/pm2 restart nail-app
+```
+
+### 环境变量（server/.env.production）
 
 | 变量 | 说明 | 示例 |
 |------|------|------|
-| `NODE_ENV` | 环境标识 | `production` |
 | `PORT` | 监听端口 | `3000` |
-| `BASE_URL` | 服务器公网地址 | `https://your-domain.com` |
 | `DB_HOST` | PostgreSQL 主机 | `localhost` |
 | `DB_PORT` | PostgreSQL 端口 | `5432` |
 | `DB_NAME` | 数据库名 | `nail_app` |
-| `DB_USER` | 数据库用户 | `postgres` |
+| `DB_USER` | 数据库用户 | `nailapp` |
 | `DB_PASSWORD` | 数据库密码 | |
-| `JWT_SECRET` | JWT 签名密钥（必填） | 随机长字符串 |
+| `JWT_SECRET` | JWT 签名密钥（必填，随机长字符串） | |
 | `JWT_EXPIRES_IN` | Token 有效期 | `7d` |
-| `UPLOADS_DIR` | 图片上传目录 | `/var/www/nail-app/uploads` |
-| `CORS_ORIGIN` | 允许的跨域来源 | `*` 或逗号分隔的地址 |
 
-> `.env.local` 和 `.env.production` 已加入 `.gitignore`，不会提交到仓库。
+## 打包 APK（Android，免费）
+
+```bash
+cd mobile
+npm install -g eas-cli
+eas login          # 需要 expo.dev 账号（免费注册）
+eas build:configure
+eas build -p android --profile preview
+```
+
+构建完成后下载 APK，开启手机"允许未知来源安装"即可分发。免费账号每月 30 次构建。
